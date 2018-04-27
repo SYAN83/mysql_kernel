@@ -1,5 +1,5 @@
 from ipykernel.kernelbase import Kernel
-from .utils import MySQLReader
+from .mysql import MySQLReader
 import os
 import yaml
 

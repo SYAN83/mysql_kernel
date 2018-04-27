@@ -1,7 +1,7 @@
 import pymysql
 import pandas as pd
 import re
-from mysql_grader import MySQLAutoTest
+from grader import MySQLAutoTest
 
 
 class MySQLReader(object):
