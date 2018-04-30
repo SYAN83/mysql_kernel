@@ -192,14 +192,10 @@ class MySQLAutoTestErrorMessages(object):
 
 if __name__ == '__main__':
     df1 = pd.DataFrame({'col1': [3,2,1], 'col2': ['c','b','a']})
-    df2 = pd.DataFrame({'col2': ['a','b','c'], 'col1': [1,2,3]})
-    # print(set(tuple(sorted(row.items())) for row in df1.to_dict(orient='row')))
-    # print(set(tuple(sorted(row.items())) for row in df2.to_dict(orient='row')))
+    df2 = pd.DataFrame({'col2': ['a','b','c'], 'col3': [1,2,3]})
     test = MySQLAutoTest(df1=df1, df2=df2)
-    # test.assertRowsEqual(strict=True, pre_msg='Testing table equality:', post_msg='Did you sort your table?')
-    # test.assertRowsEqual(strict=False)
     try:
-        eval('test.assertRowNumEquals(4)')
+        eval('test.assertColumnIncludeOnly()')
     except Exception as e:
         print(e)
     else:

@@ -31,9 +31,10 @@ class MySQLKernel(Kernel):
                    user_expressions=None,
                    allow_stdin=False):
         if not silent:
-            for msg in self.reader.run(code=code):
-                stream_content = {'name': 'stdout', 'text': msg}
-                self.send_response(self.iopub_socket, 'stream', stream_content)
+            for message in self.reader.run(code=code):
+                self.send_response(stream=self.iopub_socket,
+                                   msg_or_type=message.msg_type,
+                                   content=message.content)
 
         return {'status': 'ok',
                 # The base class increments the execution count
