@@ -16,6 +16,7 @@ class MySQLKernel(Kernel):
     }
     banner = "MySQL kernel"
 
+    mysql_api_path = '/api/mysql_config.yml'
     mysql_setting_file = os.path.join(os.path.expanduser('~'), '.local/config/mysql_config.yml')
     _CONFIG = {}
 
@@ -23,6 +24,9 @@ class MySQLKernel(Kernel):
         super().__init__(*args, **kwargs)
         if os.path.exists(self.mysql_setting_file):
             with open(self.mysql_setting_file, 'r') as f:
+                self._CONFIG.update(yaml.load(f))
+        elif os.path.exists(self.mysql_api_path):
+            with open(self.mysql_api_path, 'r') as f:
                 self._CONFIG.update(yaml.load(f))
         self.reader = MySQLReader(**self._CONFIG)
 
