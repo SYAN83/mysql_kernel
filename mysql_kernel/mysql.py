@@ -68,15 +68,23 @@ class MySQLReader(object):
             yield msg
         # run autotest
         test = MySQLAutoTest(df1=self._data, df2=self._soln)
+        count = 0
         for line in testcases:
             if re.search(r'test.assert\w+\(\w*\s*\)', line):
                 try:
                     msg = eval(line)
-                    yield Message(msg_type='stream',
-                                  content={'name': 'stdout', 'text': msg})
+
                 except Exception as e:
                     yield Message(msg_type='error',
                                   content=error_content(e))
+                    break
+                else:
+                    yield Message(msg_type='stream',
+                                  content={'name': 'stdout', 'text': msg})
+                    count += 1
+        else:
+            yield Message(msg_type='execute_result',
+                          content={'data':{'text/plain':'AutoTest cases passed: {}'.format(count)}})
 
     def close(self):
         """Close database connection
