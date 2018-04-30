@@ -17,7 +17,7 @@ def catch_error(func):
 
 class MySQLAutoTest(object):
 
-    def __init__(self, df1, df2=None):
+    def __init__(self, df1=None, df2=None):
         self.df1 = df1
         self.df2 = df2
 
@@ -49,6 +49,7 @@ class MySQLAutoTest(object):
         :param kwargs:
         :return:
         """
+        self.assertTableFetched()
         if num is None:
             num = self.df2.shape[1]
         if self.df1.shape[1] != num:
@@ -60,6 +61,7 @@ class MySQLAutoTest(object):
         :param cols:
         :return:
         """
+        self.assertTableFetched()
         if cols == []:
             cols = self.df2.columns
         diff = set(cols) - set(self.df1.columns)
@@ -72,6 +74,7 @@ class MySQLAutoTest(object):
         :param cols:
         :return:
         """
+        self.assertTableFetched()
         intersection = set(cols).intersection(self.df1.columns)
         if intersection:
             raise AutoTestCaseError(diff=intersection, **kwargs)
@@ -83,6 +86,7 @@ class MySQLAutoTest(object):
         :param kwargs:
         :return:
         """
+        self.assertTableFetched()
         if cols == []:
             cols = self.df2.columns
         col_1 = set(self.df1.columns)
@@ -101,6 +105,7 @@ class MySQLAutoTest(object):
         :param kwargs:
         :return:
         """
+        self.assertTableFetched()
         if num is None:
             num = self.df2.shape[0]
         if self.df1.shape[0] != num:
@@ -114,6 +119,7 @@ class MySQLAutoTest(object):
         :param kwargs:
         :return:
         """
+        self.assertTableFetched()
         if strict:
             temp = ~self.df1.isin(self.df2).all(axis=1)
             diff = list(map(str, temp.index[temp].tolist()))
@@ -152,7 +158,7 @@ class AutoTestCaseError(Exception):
 
 class MySQLAutoTestErrorMessages(object):
 
-    assertTableFetched = 'Your query did not fetched any tables!'
+    assertTableFetched = 'Your query did not fetched any table!'
     assertSolutionExists = 'Table does not exist or not available!'
 
     def msg(self, func, **kwargs):
@@ -191,7 +197,7 @@ class MySQLAutoTestErrorMessages(object):
 
 
 if __name__ == '__main__':
-    df1 = pd.DataFrame({'col1': [3,2,1], 'col2': ['c','b','a']})
+    df1 = None #pd.DataFrame({'col1': [3,2,1], 'col2': ['c','b','a']})
     df2 = pd.DataFrame({'col2': ['a','b','c'], 'col3': [1,2,3]})
     test = MySQLAutoTest(df1=df1, df2=df2)
     try:
