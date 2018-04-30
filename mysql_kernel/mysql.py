@@ -9,6 +9,14 @@ from collections import namedtuple
 Message = namedtuple('Message', ['msg_type', 'content'])
 
 
+def error_content(e):
+    content = {'ename': e.__class__.__name__,
+               'evalue': e.__str__()}
+    traceback = ['\x1b[0;31m{ename}\x1b[0m: {evalue}'.format(**content)]
+    content['traceback'] = traceback
+    return content
+
+
 class MySQLReader(object):
     """A low level MySQL API which send query to MySQL database and fetch data.
     """
@@ -36,11 +44,11 @@ class MySQLReader(object):
                 result = self._execute(query=query)
             except pymysql.err.MySQLError as e:
                 yield Message(msg_type='error',
-                              content={'ename': e.__class__.__name__, 'evalue': e.__str__()})
+                              content=error_content(e))
             else:
                 msg = self._format(result=result, soln=soln)
                 if isinstance(msg, dict):
-                    yield Message(msg_type='execute_result',
+                    yield Message(msg_type='display_data',
                                   content={'data': msg})
                 else:
                     yield Message(msg_type='stream',
@@ -68,7 +76,7 @@ class MySQLReader(object):
                                   content={'name': 'stdout', 'text': msg})
                 except Exception as e:
                     yield Message(msg_type='error',
-                                  content={'ename': e.__class__.__name__, 'evalue': e.__str__()})
+                                  content=error_content(e))
 
     def close(self):
         """Close database connection
@@ -107,8 +115,10 @@ class MySQLReader(object):
                 self._data = table
             return {'text/html': table.to_html(),
                     'text/plain': table.to_string()}
+        elif not result:
+            return ''
         else:
-            return result
+            return str(result)
 
 
 if __name__ == '__main__':
@@ -131,7 +141,7 @@ if __name__ == '__main__':
     SHOW databases;
     USE shuyan_db;
     SHOW tables;
-    CREATE table temp AS SELECT * FROm actors LIMIT 2;
+    CREATE table temp AS SELECT * FROM actors LIMIT 2;
     SHOW tables;
     abc
     """
@@ -154,4 +164,4 @@ if __name__ == '__main__':
     test.assertColumnIncludeOnly()
     """
     for msg in reader.run(code=test_code):
-        print(msg)
+        pprint.pprint(msg)
