@@ -197,11 +197,11 @@ class MySQLAutoTestErrorMessages(object):
 
 
 if __name__ == '__main__':
-    df1 = None #pd.DataFrame({'col1': [3,2,1], 'col2': ['c','b','a']})
+    df1 = pd.DataFrame({'col1': [3,2,1], 'col2': ['c','b','a']})
     df2 = pd.DataFrame({'col2': ['a','b','c'], 'col3': [1,2,3]})
     test = MySQLAutoTest(df1=df1, df2=df2)
     try:
-        eval('test.assertColumnIncludeOnly()')
+        eval('test.assertColumnNumEqual(num=4)')
     except Exception as e:
         print(e)
     else:

@@ -43,9 +43,6 @@ class MySQLReader(object):
         for query in filter(len, (query.strip() for query in sql_code.strip().split(';'))):
             try:
                 result = self._execute(query=query)
-            except pymysql.err.OperationalError as e:
-                if e.__str__().find('Connection timed out') > 0:
-                    self._connect()
             except pymysql.err.MySQLError as e:
                 yield Message(msg_type='error',
                               content=error_content(e))
@@ -63,7 +60,7 @@ class MySQLReader(object):
         for i in range(len(lines)):
             if re.search('AutoTest', lines[i], re.IGNORECASE):
                 sql_soln = '\n'.join(lines[:i])
-                testcases = lines[i+1:]
+                testcases = filter(len, [line.strip() for line in lines[i+1:]])
                 break
         else:
             return
@@ -74,18 +71,19 @@ class MySQLReader(object):
         test = MySQLAutoTest(df1=self._data, df2=self._soln)
         count = 0
         for line in testcases:
-            if re.search(r'test.assert\w+\(\w*\s*\)', line):
+            if line and re.search(r'test.assert\w+\([\w\s=]*\)', line):
                 try:
                     msg = eval(line)
-
                 except Exception as e:
                     yield Message(msg_type='error',
                                   content=error_content(e))
                     break
                 else:
+                    if msg is None:
+                        msg = 'OK'
+                    count += 1
                     yield Message(msg_type='stream',
                                   content={'name': 'stdout', 'text': msg})
-                    count += 1
         else:
             yield Message(msg_type='execute_result',
                           content={'data':{'text/plain':'AutoTest cases passed: {}'.format(count)}})
@@ -143,25 +141,23 @@ if __name__ == '__main__':
 
     reader = MySQLReader(**CONFIG)
     queries = """
-    SHOW databases;
+    USE movies_db;
+
+    SELECT * FROM movies LIMIT 5;
     """
     for msg in reader.run(code=queries):
         pprint.pprint(msg)
 
-    #
-    # print('*********************')
-    #
-    # test_code = """
-    # SELECT actor_1_name, budget
-    # FROM movies
-    # LIMIT 4;
-    #
-    # AutoTest:
-    #
-    # test.assertTableFetched()
-    # test.assertRowNumEqual()
-    # test.assertColumnInclude()
-    # test.assertColumnIncludeOnly()
-    # """
-    # for msg in reader.run(code=test_code):
-    #     pprint.pprint(msg)
+
+    print('*********************')
+
+    test_code = """
+    SELECT * FROM movies LIMIT 5;
+    
+    AutoTest:
+    test.assertTableFetched()
+    test.assertColumnNumEqual()
+    test.assertColumnInclude()
+    """
+    for msg in reader.run(code=test_code):
+        pprint.pprint(msg)
