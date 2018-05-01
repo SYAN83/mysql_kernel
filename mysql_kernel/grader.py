@@ -201,7 +201,7 @@ if __name__ == '__main__':
     df2 = pd.DataFrame({'col2': ['a','b','c'], 'col3': [1,2,3]})
     test = MySQLAutoTest(df1=df1, df2=df2)
     try:
-        eval('test.assertColumnNumEqual(num=4)')
+        eval('test.assertColumnIncludeOnly(cols=[\'col1\', \'col2\'])')
     except Exception as e:
         print(e)
     else:

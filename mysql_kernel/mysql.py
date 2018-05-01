@@ -71,7 +71,7 @@ class MySQLReader(object):
         test = MySQLAutoTest(df1=self._data, df2=self._soln)
         count = 0
         for line in testcases:
-            if line and re.search(r'test.assert\w+\([\w\s=]*\)', line):
+            if line and re.search(r'test.assert\w+\(.*\)', line):
                 try:
                     msg = eval(line)
                 except Exception as e:
@@ -142,8 +142,7 @@ if __name__ == '__main__':
     reader = MySQLReader(**CONFIG)
     queries = """
     USE movies_db;
-
-    SELECT * FROM movies LIMIT 5;
+    SELECT movie_title, language, genres, imdb_score FROM movies LIMIT 2;
     """
     for msg in reader.run(code=queries):
         pprint.pprint(msg)
@@ -152,12 +151,12 @@ if __name__ == '__main__':
     print('*********************')
 
     test_code = """
-    SELECT * FROM movies LIMIT 5;
-    
     AutoTest:
+    
     test.assertTableFetched()
-    test.assertColumnNumEqual()
-    test.assertColumnInclude()
+    test.assertRowNumEqual(num=2)
+    test.assertColumnNumEqual(num=4)
+    test.assertColumnIncludeOnly(cols=[\'movie_title\', \'language\', \'genres\', \'imdb_score\'])
     """
     for msg in reader.run(code=test_code):
         pprint.pprint(msg)
