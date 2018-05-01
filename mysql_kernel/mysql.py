@@ -20,6 +20,7 @@ def error_content(e):
 class MySQLReader(object):
     """A low level MySQL API which send query to MySQL database and fetch data.
     """
+    _conn = None
     _data = None
     _soln = None
 
@@ -93,28 +94,28 @@ class MySQLReader(object):
         """Close database connection
         :return: None
         """
-        self.conn.close()
+        self._conn.close()
 
     def _connect(self):
         """Connect to MySQL server.
         :return: None
         """
-        self.conn = pymysql.connect(host=self.host,
-                                    port=self.port,
-                                    user=self.user,
-                                    password=self.password,
-                                    charset="utf8mb4",
-                                    cursorclass=pymysql.cursors.DictCursor,
-                                    autocommit=True)
+        self._conn = pymysql.connect(host=self.host,
+                                     port=self.port,
+                                     user=self.user,
+                                     password=self.password,
+                                     charset="utf8mb4",
+                                     cursorclass=pymysql.cursors.DictCursor,
+                                     autocommit=True)
 
     def _execute(self, query):
         """Send query to MySQL database and fetch output, reconnect to database if disconnected.
         :param query: A MySQL supported query.
         :return: Fetched data.
         """
-        if not reader.conn.open:
+        if not reader._conn.open:
             self._connect()
-        with self.conn.cursor() as cursor:
+        with self._conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
             return result
