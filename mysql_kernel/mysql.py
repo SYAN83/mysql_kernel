@@ -113,7 +113,7 @@ class MySQLReader(object):
         :param query: A MySQL supported query.
         :return: Fetched data.
         """
-        if not reader._conn.open:
+        if not self._conn.open:
             self._connect()
         with self._conn.cursor() as cursor:
             cursor.execute(query)
