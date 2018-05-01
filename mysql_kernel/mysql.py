@@ -42,6 +42,9 @@ class MySQLReader(object):
         for query in filter(len, (query.strip() for query in sql_code.strip().split(';'))):
             try:
                 result = self._execute(query=query)
+            except pymysql.err.OperationalError as e:
+                if e.__str__().find('Connection timed out') > 0:
+                    self._connect()
             except pymysql.err.MySQLError as e:
                 yield Message(msg_type='error',
                               content=error_content(e))
@@ -109,6 +112,8 @@ class MySQLReader(object):
         :param query: A MySQL supported query.
         :return: Fetched data.
         """
+        if not reader.conn.open:
+            self._connect()
         with self.conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -138,38 +143,24 @@ if __name__ == '__main__':
     reader = MySQLReader(**CONFIG)
     queries = """
     SHOW databases;
-    USE movies_db;
-    SHOW tables;
-    SELECT actor_2_name, budget 
-    FROM movies LIMIT 0;
-    sthwrong
     """
-
-    queries = """
-    SHOW databases;
-    USE shuyan_db;
-    SHOW tables;
-    CREATE table temp AS SELECT * FROM actors LIMIT 2;
-    SHOW tables;
-    abc
-    """
-
     for msg in reader.run(code=queries):
         pprint.pprint(msg)
 
-    print('*********************')
-
-    test_code = """
-    SELECT actor_1_name, budget
-    FROM movies
-    LIMIT 4;
-
-    AutoTest:
-
-    test.assertTableFetched()
-    test.assertRowNumEqual()
-    test.assertColumnInclude()
-    test.assertColumnIncludeOnly()
-    """
-    for msg in reader.run(code=test_code):
-        pprint.pprint(msg)
+    #
+    # print('*********************')
+    #
+    # test_code = """
+    # SELECT actor_1_name, budget
+    # FROM movies
+    # LIMIT 4;
+    #
+    # AutoTest:
+    #
+    # test.assertTableFetched()
+    # test.assertRowNumEqual()
+    # test.assertColumnInclude()
+    # test.assertColumnIncludeOnly()
+    # """
+    # for msg in reader.run(code=test_code):
+    #     pprint.pprint(msg)
