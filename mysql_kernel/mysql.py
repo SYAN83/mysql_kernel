@@ -111,8 +111,7 @@ class MySQLReader(object):
         :param query: A MySQL supported query.
         :return: Fetched data.
         """
-        if not self._conn.open:
-            self._connect()
+        self._conn.ping(reconnect=True)
         with self._conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -134,29 +133,34 @@ class MySQLReader(object):
 
 
 if __name__ == '__main__':
-    import yaml
+    import yaml, time
 
     with open('/Users/shuyan/.local/config/mysql_config.yml', 'r') as f:
         CONFIG = yaml.load(f)
 
     reader = MySQLReader(**CONFIG)
-    queries = """
-    USE movies_db;
-    SELECT movie_title, language, genres, imdb_score FROM movies LIMIT 2;
-    """
-    for msg in reader.run(code=queries):
-        pprint.pprint(msg)
+    time.sleep(5)
+    print(reader._execute("Show databases;"))
+
+    # print(reader._conn.ping(reconnect=True))
+
+    # queries = """
+    # USE movies_db;
+    # SELECT movie_title, language, genres, imdb_score FROM movies LIMIT 2;
+    # """
+    # for msg in reader.run(code=queries):
+    #     pprint.pprint(msg)
 
 
-    print('*********************')
-
-    test_code = """
-    AutoTest:
-    
-    test.assertTableFetched()
-    test.assertRowNumEqual(num=2)
-    test.assertColumnNumEqual(num=4)
-    test.assertColumnIncludeOnly(cols=[\'movie_title\', \'language\', \'genres\', \'imdb_score\'])
-    """
-    for msg in reader.run(code=test_code):
-        pprint.pprint(msg)
+    # print('*********************')
+    #
+    # test_code = """
+    # AutoTest:
+    #
+    # test.assertTableFetched()
+    # test.assertRowNumEqual(num=2)
+    # test.assertColumnNumEqual(num=4)
+    # test.assertColumnIncludeOnly(cols=[\'movie_title\', \'language\', \'genres\', \'imdb_score\'])
+    # """
+    # for msg in reader.run(code=test_code):
+    #     pprint.pprint(msg)
