@@ -23,6 +23,9 @@ class MySQLReader(object):
     _conn = None
     _data = None
     _soln = None
+    _formatter={'float_format':lambda x: '{:2f}'.format(x),
+                'max_rows':16,
+                'max_cols':8}
 
     def __init__(self, **kwargs):
         self.host = kwargs.get('host', 'localhost')
@@ -47,7 +50,7 @@ class MySQLReader(object):
                 yield Message(msg_type='error',
                               content=error_content(e))
             else:
-                msg = self._format(result=result, soln=soln)
+                msg = self._format(result=result, soln=soln, **self._formatter)
                 if isinstance(msg, dict):
                     yield Message(msg_type='display_data',
                                   content={'data': msg})
@@ -112,20 +115,27 @@ class MySQLReader(object):
         :return: Fetched data.
         """
         self._conn.ping(reconnect=True)
-        with self._conn.cursor() as cursor:
-            cursor.execute(query)
-            result = cursor.fetchall()
+        try:
+            with self._conn.cursor() as cursor:
+                cursor.execute(query)
+                result = cursor.fetchall()
+        except pymysql.err.OperationalError:
+            self.close()
+            self._connect()
+            raise pymysql.err.OperationalError('Reconnecting to MySQL Server, please try again.')
+        else:
             return result
 
-    def _format(self, result, soln=False):
+
+    def _format(self, result, soln=False, **kwargs):
         if isinstance(result, list):
             table = pd.DataFrame(result)
             if soln:
                 self._soln = table
             else:
                 self._data = table
-            return {'text/html': table.to_html(),
-                    'text/plain': table.to_string()}
+            return {'text/html': table.to_html(**kwargs),
+                    'text/plain': table.to_string(**kwargs)}
         elif not result:
             return ''
         else:
@@ -139,17 +149,13 @@ if __name__ == '__main__':
         CONFIG = yaml.load(f)
 
     reader = MySQLReader(**CONFIG)
-    time.sleep(5)
-    print(reader._execute("Show databases;"))
 
-    # print(reader._conn.ping(reconnect=True))
-
-    # queries = """
-    # USE movies_db;
-    # SELECT movie_title, language, genres, imdb_score FROM movies LIMIT 2;
-    # """
-    # for msg in reader.run(code=queries):
-    #     pprint.pprint(msg)
+    queries = """
+    USE movies_db;
+    SELECT * FROM movies;
+    """
+    for msg in reader.run(code=queries):
+        pprint.pprint(msg)
 
 
     # print('*********************')
